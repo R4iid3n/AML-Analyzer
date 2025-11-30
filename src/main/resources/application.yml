@@ -1,0 +1,133 @@
+spring:
+  application:
+    name: advanced-aml-analyzer
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aml_analyzer
+    username: aml_user
+    password: ${DB_PASSWORD:changeme}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000  # 1 hour
+
+# Blockchain node configurations
+blockchain:
+  ethereum:
+    rpc-url: ${ETH_RPC_URL:https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY}
+    api-key: ${ETH_API_KEY:}
+
+  bitcoin:
+    rpc-url: ${BTC_RPC_URL:https://mempool.space/api}
+
+  tron:
+    rpc-url: ${TRON_RPC_URL:https://api.trongrid.io}
+    api-key: ${TRON_API_KEY:}
+
+  solana:
+    rpc-url: ${SOL_RPC_URL:https://api.mainnet-beta.solana.com}
+
+# External data sources
+data-sources:
+  sanctions:
+    ofac-url: https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.CSV
+    eu-url: https://webgate.ec.europa.eu/fsd/fsf/public/files/xmlFullSanctionsList_1_1/content
+    un-url: https://scsanctions.un.org/resources/xml/en/consolidated.xml
+    chainalysis-oracle-url: https://public.chainalysis.com/api/v1
+    update-cron: "0 0 2 * * *"  # Daily at 2 AM
+
+  illicit-intel:
+    # Custom intel DB - build your own or use third-party
+    enabled: false
+    api-url: ${INTEL_API_URL:}
+    api-key: ${INTEL_API_KEY:}
+
+# Risk scoring configuration
+risk-scoring:
+  weights:
+    sanctions-direct: 60
+    sanctions-1hop: 40
+    sanctions-2-4hop: 25
+    mixers: 20
+    stolen-funds: 25
+    darknet: 20
+    scams: 20
+    ransomware: 30
+    terrorist-financing: 70
+  time-decay:
+    enabled: true
+    threshold-days: 365
+    bonus-points: -10
+  recent-activity:
+    enabled: true
+    threshold-days: 30
+    penalty-points: 10
+
+# Report generation
+reports:
+  storage-path: ${REPORTS_PATH:./reports}
+  base-url: ${REPORTS_BASE_URL:https://youraml.com/reports}
+  enable-pdf: true
+  enable-html: true
+
+# API configuration
+api:
+  rate-limit:
+    enabled: true
+    requests-per-minute: 60
+  cors:
+    allowed-origins: "*"
+
+# Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging
+logging:
+  level:
+    com.aml.analyzer: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Server
+server:
+  port: 8080
+  compression:
+    enabled: true
